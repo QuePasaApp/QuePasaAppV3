@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Anonymous Message & Pin App</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; }
+    #room-info, #user-info { margin-bottom: 1em; font-weight: bold; }
+    #messages { border: 1px solid #ccc; padding: 1em; min-height: 200px; margin-bottom: 1em; }
+    .message { margin-bottom: 0.5em; padding: 0.5em 1em; border-radius: 1em; display: inline-block; max-width: 70%; color: #fff; }
+    .location { color: #2d7; }
+    #pin-location { margin-left: 1em; }
+    #user-list { margin: 1em 0; }
+    .kick-btn { margin-left: 0.5em; color: red; cursor: pointer; background: none; border: none; }
+  </style>
+</head>
+<body>
+  <h1>Anonymous Message & Pin App</h1>
+  <div id="room-info"></div>
+  <div id="user-info"></div>
+  <div id="user-list"></div>
+  <div id="messages"></div>
+  <form id="message-form">
+    <input type="text" id="message-input" placeholder="Type your message..." required />
+    <button type="submit">Send</button>
+    <button type="button" id="pin-location">Pin Location</button>
+  </form>
+  <script src="app.js"></script>
+</body>
+</html>
