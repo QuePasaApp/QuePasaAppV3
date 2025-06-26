@@ -2,23 +2,28 @@
 const APP_NAME = "QuePasaAppV3";
 
 // --- Room Code Logic ---
-function randomRoomCode() {
-  // 6 digits + 1 uppercase letter
+// Generate 6 random digits and 1 random uppercase letter
+function generateRoomCode() {
   const digits = Array.from({length: 6}, () => Math.floor(Math.random() * 10)).join('');
   const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
   return digits + letter;
 }
 
-// Get or set 7-character room code in URL
-let params = new URLSearchParams(window.location.search);
-let room = params.get('room');
-if (!room || !/^\d{6}[A-Z]$/.test(room)) {
-  room = randomRoomCode();
-  params.set('room', room);
-  window.location.search = params.toString();
+// Get or set the room code in the URL, using history.replaceState (no reload)
+function getRoomCodeFromURL() {
+  let params = new URLSearchParams(window.location.search);
+  let room = params.get('room');
+  if (!room || !/^\d{6}[A-Z]$/.test(room)) {
+    room = generateRoomCode();
+    params.set('room', room);
+    window.history.replaceState({}, '', '?' + params.toString());
+  }
+  return room;
 }
 
-// --- Color pool (expanded and vibrant for nice user variety!) ---
+const room = getRoomCodeFromURL();
+
+// --- Color pool (expanded and vibrant for nice user variety) ---
 const COLOR_MAP = {
   Red: '#e74c3c',
   Blue: '#3498db',
@@ -41,7 +46,7 @@ const COLORS = Object.keys(COLOR_MAP);
 const TITLES = ['Mr', 'Ms', 'Mx', 'Dr', 'Prof'];
 
 // --- Generate or retrieve username + random color on each room join ---
-function getUsername() {
+function getUsernameObj() {
   let userObj = localStorage.getItem(`anon_user_${room}`);
   if (!userObj) {
     const color = COLORS[Math.floor(Math.random() * COLORS.length)];
@@ -57,7 +62,7 @@ function getUsername() {
 function getRoomOwner(room) {
   let owner = localStorage.getItem(`room_owner_${room}`);
   if (!owner) {
-    owner = username.username; // First user to create the room is owner
+    owner = usernameObj.username;
     localStorage.setItem(`room_owner_${room}`, owner);
   }
   return owner;
@@ -92,24 +97,26 @@ function blockUser(room, username) {
 }
 
 // --- App state ---
-const username = getUsername();
+const usernameObj = getUsernameObj();
+const username = usernameObj.username;
+const userColor = COLOR_MAP[usernameObj.color] || '#888';
 const owner = getRoomOwner(room);
 
 // --- Room access control ---
 const blocked = getBlockedUsers(room);
-if (blocked.includes(username.username)) {
+if (blocked.includes(username)) {
   alert('You have been removed from this room.');
-  removeUserFromRoom(room, username.username);
+  removeUserFromRoom(room, username);
   document.body.innerHTML = `<h2 style="text-align:center;">You have been removed from this room.</h2>`;
   throw new Error('Blocked');
 }
 
-addUserToRoom(room, username.username);
+addUserToRoom(room, username);
 
 // --- UI setup ---
 document.title = APP_NAME;
 document.getElementById('room-info').textContent = `Room Code: ${room} (Owner: ${owner})`;
-document.getElementById('user-info').textContent = `You are: ${username.username}`;
+document.getElementById('user-info').textContent = `You are: ${username}`;
 document.getElementById('code-btn-code').textContent = room;
 
 // --- Messages State ---
@@ -119,7 +126,7 @@ let messages = JSON.parse(localStorage.getItem(`room_msgs_${room}`) || '[]');
 function renderUserList() {
   const listDiv = document.getElementById('user-list');
   const users = getUsersInRoom(room);
-  if (username.username === owner) {
+  if (username === owner) {
     let html = '<b>Users:</b> ';
     html += users.map(u => {
       if (u === owner) return `${u} (owner)`;
@@ -148,10 +155,8 @@ function renderMessages(messages) {
   messages.forEach(msg => {
     const div = document.createElement('div');
     div.className = 'message';
-    // Find color for user
-    let color = COLOR_MAP[(msg.color && COLORS.includes(msg.color)) ? msg.color : 'Blue'];
+    let color = COLOR_MAP[(msg.color && COLORS.includes(msg.color)) ? msg.color : usernameObj.color] || '#888';
     if (!color && msg.user) {
-      // fallback: try to extract color from username
       for (const c of COLORS) if (msg.user && msg.user.includes(c)) color = COLOR_MAP[c];
     }
     div.style.background = color || '#888';
@@ -171,7 +176,7 @@ document.getElementById('message-form').addEventListener('submit', function(e) {
   const input = document.getElementById('message-input');
   const text = input.value.trim();
   if (text) {
-    messages.push({ type: 'text', user: username.username, text, color: username.color });
+    messages.push({ type: 'text', user: username, text, color: usernameObj.color });
     localStorage.setItem(`room_msgs_${room}`, JSON.stringify(messages));
     renderMessages(messages);
     input.value = '';
@@ -189,8 +194,8 @@ document.getElementById('pin-location').addEventListener('click', function() {
       const { latitude, longitude } = position.coords;
       messages.push({
         type: 'location',
-        user: username.username,
-        color: username.color,
+        user: username,
+        color: usernameObj.color,
         lat: latitude.toFixed(6),
         lng: longitude.toFixed(6)
       });
@@ -217,7 +222,6 @@ window.addEventListener('storage', function(e) {
 
 // --- QR code generation ---
 const roomUrl = window.location.origin + window.location.pathname + '?room=' + room;
-// Hidden QR for flash only
 const flashQr = new QRious({
   element: document.getElementById('flash-qr-code'),
   value: roomUrl,
