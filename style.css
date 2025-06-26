@@ -1,323 +1,79 @@
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100vw;
-  min-height: 100vh;
-  box-sizing: border-box;
-  background: linear-gradient(145deg, #145214 0%, #1e772a 100%);
-  color: #fff;
-  font-family: 'Segoe UI', Arial, sans-serif;
+// ---- FIREBASE IMPLEMENTATION (DROP-IN) ----
+// 1. Add your Firebase config below.
+// 2. Exports functions for room/user/poll management, including auto-delete.
+// 3. Use these hooks in your app.js in place of local/test logic.
+
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ----- USER MANAGEMENT -----
+export async function joinRoom(roomCode, userObj) {
+  await db.ref('rooms/' + roomCode + '/users/' + userObj.color).set(userObj);
+}
+export async function leaveRoom(roomCode, color) {
+  await db.ref('rooms/' + roomCode + '/users/' + color).remove();
+  // Trigger auto-delete check
+  autoDeleteRoomIfEmpty(roomCode);
+}
+export function listenForUsers(roomCode, callback) {
+  db.ref('rooms/' + roomCode + '/users').on('value', snap => {
+    const val = snap.val() || {};
+    callback(Object.values(val));
+  });
 }
 
-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: 100vh;
+// ----- KICK -----
+export async function kickUser(roomCode, color) {
+  await leaveRoom(roomCode, color);
 }
 
-.header-bar {
-  width: 100vw;
-  max-width: 100vw;
-  background: #145214ee;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1em 2vw 0.7em 2vw;
+// ----- MESSAGES -----
+export async function sendMessage(roomCode, msgObj) {
+  await db.ref('rooms/' + roomCode + '/messages').push(msgObj);
+}
+export function listenForMessages(roomCode, callback) {
+  db.ref('rooms/' + roomCode + '/messages').on('value', snap => {
+    const val = snap.val() || {};
+    callback(Object.values(val));
+  });
 }
 
-h1 {
-  margin: 0;
-  font-size: 2.2em;
-  letter-spacing: 1px;
-  font-weight: bold;
-  text-shadow: 0 2px 8px #0005;
-  flex: 1 1 auto;
-  text-align: center;
+// ----- POLL -----
+export async function startPoll(roomCode) {
+  await db.ref('rooms/' + roomCode + '/poll').set({active:true, votes:{}});
+}
+export async function votePoll(roomCode, color, vote) {
+  await db.ref('rooms/' + roomCode + '/poll/votes/' + color).set(vote);
+}
+export function listenForPoll(roomCode, callback) {
+  db.ref('rooms/' + roomCode + '/poll').on('value', snap => {
+    callback(snap.val());
+  });
+}
+export async function endPoll(roomCode) {
+  await db.ref('rooms/' + roomCode + '/poll').remove();
 }
 
-#new-room-btn, #leave-room-btn {
-  font-size: 1.08em;
-  font-weight: bold;
-  border-radius: 2em;
-  border: none;
-  background: #fff;
-  color: #145214;
-  padding: 0.55em 1.5em;
-  margin: 0 0.5em;
-  cursor: pointer;
-  box-shadow: 0 1px 8px #0002;
-  transition: background 0.15s, color 0.15s;
-}
-#new-room-btn:active, #leave-room-btn:active {
-  background: #145214;
-  color: #fff;
-}
-
-#room-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 2em 0 0.5em 0;
-}
-
-.room-code-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-#room-info {
-  font-size: 1.19em;
-  font-weight: bold;
-  letter-spacing: 0.15em;
-  margin-bottom: 0.5em;
-}
-#room-code-display {
-  font-family: "Consolas", "Courier New", monospace;
-  background: #fff;
-  color: #145214;
-  border-radius: 0.3em;
-  padding: 0.07em 0.46em;
-  margin-left: 0.5em;
-  font-size: 1.5em;
-  font-weight: bold;
-  letter-spacing: 0.2em;
-}
-
-#qr-code-big {
-  border-radius: 1.2em;
-  border: 8px solid #fff;
-  background: #fff;
-  box-shadow: 0 2px 32px #222c;
-  margin-top: 0.4em;
-  width: 240px;
-  height: 240px;
-  max-width: 90vw;
-  max-height: 90vw;
-  display: block;
-}
-.qr-label {
-  color: #fff;
-  text-align: center;
-  margin-top: 0.6em;
-  margin-bottom: 1em;
-  font-size: 1.09em;
-  font-weight: 500;
-}
-
-#join-room-form {
-  margin-top: 1.1em;
-  margin-bottom: 0.7em;
-  display: flex;
-  gap: 0.6em;
-  align-items: center;
-}
-#join-room-input {
-  font-size: 1.09em;
-  border-radius: 0.5em;
-  border: 1px solid #ccc;
-  text-align: center;
-  padding: 0.4em 1.1em;
-}
-#join-room-form button {
-  background: #fff;
-  color: #145214;
-  border-radius: 0.5em;
-  padding: 0.4em 1.1em;
-  border: none;
-  font-size: 1.08em;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-#user-info {
-  margin-top: 0.7em;
-  margin-bottom: 0.3em;
-  font-size: 1.09em;
-  letter-spacing: 0.08em;
-  text-align: center;
-}
-
-#user-list {
-  margin-bottom: 1em;
-  font-weight: bold;
-  text-align: center;
-  width: 100%;
-  min-height: 2.2em;
-}
-
-.user-roster {
-  display: flex;
-  gap: 1em;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-top: 0.4em;
-}
-.user-roster-item {
-  display: flex;
-  align-items: center;
-  gap: 0.3em;
-  font-size: 1em;
-  min-width: 70px;
-}
-.color-dot {
-  display: inline-block;
-  width: 1.1em;
-  height: 1.1em;
-  border-radius: 50%;
-  border: 2px solid #fff;
-  vertical-align: middle;
-  margin-right: 0.1em;
-}
-.kick-btn {
-  margin-left: 0.2em;
-  background: #ffebee;
-  color: #b71c1c;
-  border: 1.5px solid #b71c1c;
-  border-radius: 50%;
-  font-size: 1.09em;
-  width: 1.5em;
-  height: 1.5em;
-  cursor: pointer;
-  transition: background 0.14s;
-  padding: 0;
-  box-shadow: 0 1px 4px #b71c1c22;
-}
-.kick-btn:active {
-  background: #b71c1c;
-  color: #fff;
-}
-
-#poll-section {
-  margin: 1em 0 1.5em 0;
-  text-align: center;
-}
-#start-poll-btn {
-  background: #ffd600;
-  color: #145214;
-  font-weight: bold;
-  border-radius: 0.7em;
-  font-size: 1.08em;
-  border: none;
-  padding: 0.45em 1.5em;
-  margin-bottom: 0.7em;
-  cursor: pointer;
-  box-shadow: 0 1px 8px #0002;
-  letter-spacing: 0.05em;
-}
-#start-poll-btn:active {
-  background: #ffe066;
-}
-#poll-question {
-  margin-top: 0.6em;
-  margin-bottom: 0.6em;
-  font-size: 1.18em;
-}
-.vote-btn {
-  font-size: 1.08em;
-  background: #fff;
-  color: #145214;
-  border: none;
-  border-radius: 0.5em;
-  padding: 0.38em 1.1em;
-  margin: 0.2em 0.4em;
-  cursor: pointer;
-  font-weight: bold;
-  box-shadow: 0 1px 8px #0001;
-  transition: background 0.13s, color 0.13s;
-}
-.vote-btn:active {
-  background: #b9f6ca;
-  color: #1b5e20;
-}
-#poll-results {
-  margin-top: 1em;
-  background: #145214;
-  color: #fff;
-  border-radius: 0.5em;
-  padding: 0.7em 1.4em;
-  font-size: 1.08em;
-  box-shadow: 0 2px 12px #0003;
-}
-
-#chat-section {
-  width: 100vw;
-  max-width: 600px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-#messages {
-  border: 1px solid #ccc;
-  padding: 1em;
-  min-height: 140px;
-  margin-bottom: 1em;
-  width: 95%;
-  max-width: 600px;
-  background: #fff;
-  text-align: center;
-  box-sizing: border-box;
-  border-radius: 1em;
-  color: #333;
-  box-shadow: 0 2px 16px #0002;
-  overflow-x: auto;
-}
-.message {
-  margin-bottom: 0.4em;
-  padding: 0.5em 1em;
-  border-radius: 1em;
-  display: inline-block;
-  max-width: 70%;
-  color: #fff;
-  text-align: left;
-  box-shadow: 0 2px 8px #0001;
-}
-.location {
-  color: #2d7;
-}
-#message-form {
-  width: 95%;
-  max-width: 600px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5em;
-  margin-bottom: 1em;
-}
-#message-input {
-  flex: 1;
-  padding: 0.5em;
-  font-size: 1em;
-  border-radius: 0.5em;
-  border: 1px solid #ccc;
-  box-sizing: border-box;
-  text-align: center;
-}
-#pin-location {
-  background: #ffd600;
-  color: #145214;
-  border: none;
-  border-radius: 0.7em;
-  padding: 0.48em 1.2em;
-  font-weight: bold;
-  cursor: pointer;
-  font-size: 1.18em;
-  margin-left: 0.2em;
-  transition: background 0.13s, color 0.13s;
-}
-#pin-location:active {
-  background: #ffe066;
-  color: #004d40;
-}
-@media (max-width: 700px) {
-  #qr-code-big {
-    width: 80vw !important;
-    height: 80vw !important;
-    max-width: 98vw;
-    max-height: 98vw;
-  }
-  #messages, #message-form, #join-room-form {
-    width: 99vw;
-    max-width: none;
+// ----- AUTO SELF-DELETE (client-side, robust version should be a Cloud Function) -----
+export async function autoDeleteRoomIfEmpty(roomCode) {
+  const snap = await db.ref('rooms/' + roomCode + '/users').once('value');
+  if (!snap.exists() || Object.keys(snap.val()).length === 0) {
+    await db.ref('rooms/' + roomCode).remove();
   }
 }
+
+// ----- USAGE EXAMPLE -----
+// In your app.js, swap all localStorage user/message/poll logic for these methods
+// and listen for updates:
+// - listenForUsers(room, renderUserList)
+// - listenForMessages(room, renderMessages)
+// - listenForPoll(room, renderPollArea)
