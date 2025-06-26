@@ -26,7 +26,20 @@ function getRoomCodeFromURL() {
   }
   return room;
 }
-const room = getRoomCodeFromURL();
+let room = getRoomCodeFromURL();
+function updateRoomCodeUI() {
+  document.getElementById('room-code-display').textContent = room;
+  document.getElementById('room-info').innerHTML = `Room Code: <span id="room-code-display">${room}</span>`;
+  generateBigQR();
+}
+function generateBigQR() {
+  const roomUrl = window.location.origin + window.location.pathname + '?room=' + room;
+  new QRious({
+    element: document.getElementById('qr-code-big'),
+    value: roomUrl,
+    size: 240
+  });
+}
 
 // --- Local storage group user management (for test/local mode) ---
 function getUsersInRoom(room) {
@@ -78,9 +91,11 @@ const username = userObj.username;
 const userColor = COLORS.find(c => c.name === userObj.color)?.hex || '#888';
 
 // --- UI setup ---
-document.title = "QuePasaAppV3";
-document.getElementById('room-info').textContent = `Room Code: ${room}`;
-document.getElementById('user-info').textContent = `You are: ${username}`;
+function updateUserInfoUI() {
+  document.getElementById('user-info').textContent = `You are: ${username}`;
+}
+updateRoomCodeUI();
+updateUserInfoUI();
 document.getElementById('leave-room-btn').classList.add('show');
 
 // --- Sounds ---
@@ -113,7 +128,7 @@ document.addEventListener('click', function(e) {
 // --- Poll logic (local/test version) ---
 let pollActive = false;
 let pollVotes = {}; // { color: "yes"/"no" }
-let pollVoters = []; // List of users who voted
+let pollVoters = [];
 
 function isHost() {
   const users = getUsersInRoom(room);
@@ -132,8 +147,8 @@ function showPollResults() {
   const yesCount = votes.filter(v => v === "yes").length;
   const noCount = votes.filter(v => v === "no").length;
   const users = getUsersInRoom(room);
-  let html = `<b>Poll Results:</b><br>
-    👍 Yep: <b>${yesCount}</b> &nbsp; | &nbsp; 👎 Nope: <b>${noCount}</b><br><br>
+  let html = `<b>Vote Results:</b><br>
+    👍 Yes: <b>${yesCount}</b> &nbsp; | &nbsp; 👎 No: <b>${noCount}</b><br><br>
     <b>Voted:</b> ${voters.map(c => {
       const u = users.find(u => u.color === c);
       return u ? u.username : '';
@@ -150,7 +165,6 @@ function resetPoll() {
   showPollQuestion();
   document.getElementById('poll-results').style.display = "none";
 }
-// Poll UI hooks
 document.getElementById('start-poll-btn').onclick = function() {
   pollActive = true;
   pollVotes = {};
@@ -170,18 +184,16 @@ document.getElementById('vote-no').onclick = function() {
   pollVoters.push(userObj.color);
   showPollResults();
 };
-// For host: end poll after everyone has voted or a timeout (local only)
 function checkPollComplete() {
   const users = getUsersInRoom(room);
   if (Object.keys(pollVotes).length === users.length && users.length > 0) {
-    setTimeout(resetPoll, 3000); // Show for 3s, then reset
+    setTimeout(resetPoll, 3200);
   }
 }
 setInterval(() => {
   if (pollActive) checkPollComplete();
-}, 1200);
+}, 1000);
 
-// Whenever roster changes or user joins/leaves:
 function afterUserChange() {
   renderUserList();
   showStartPollBtn();
@@ -247,7 +259,6 @@ function renderMessages(messages) {
 }
 renderMessages(messages);
 
-// --- Send text message ---
 document.getElementById('message-form').addEventListener('submit', function(e) {
   e.preventDefault();
   const input = document.getElementById('message-input');
@@ -261,89 +272,10 @@ document.getElementById('message-form').addEventListener('submit', function(e) {
   }
 });
 
-// --- PIN LOCATION: Hold for 10 seconds to activate ---
-const pinLocationBtn = document.getElementById('pin-location');
-const pinStatus = document.getElementById('pin-location-status');
-let holdTimer = null;
-let holdProgress = 0;
-let holding = false;
-
-function resetPinStatus() {
-  pinStatus.style.display = "none";
-  pinStatus.textContent = "Hold to pin...";
-  pinLocationBtn.disabled = false;
-  holdProgress = 0;
-  holding = false;
-}
-pinLocationBtn.addEventListener('mousedown', function(e) {
-  if (holding) return;
-  holding = true;
-  pinStatus.textContent = "Keep holding (10s)...";
-  pinStatus.style.display = "";
-  pinLocationBtn.disabled = true;
-  let seconds = 10;
-  holdProgress = 0;
-  holdTimer = setInterval(() => {
-    holdProgress++;
-    pinStatus.textContent = `Keep holding (${seconds - holdProgress}s)...`;
-    if (holdProgress >= 10) {
-      clearInterval(holdTimer);
-      pinStatus.textContent = "Pinning...";
-      pinLocationBtn.disabled = true;
-      pinLocationBtn.style.opacity = 0.7;
-      doPinLocation();
-      setTimeout(() => {
-        resetPinStatus();
-        pinLocationBtn.style.opacity = 1;
-      }, 1200);
-    }
-  }, 1000);
-});
-pinLocationBtn.addEventListener('mouseup', function() {
-  if (holdTimer) clearInterval(holdTimer);
-  resetPinStatus();
-});
-pinLocationBtn.addEventListener('mouseleave', function() {
-  if (holdTimer) clearInterval(holdTimer);
-  resetPinStatus();
-});
-pinLocationBtn.addEventListener('touchstart', function(e) {
-  e.preventDefault();
-  if (holding) return;
-  holding = true;
-  pinStatus.textContent = "Keep holding (10s)...";
-  pinStatus.style.display = "";
-  pinLocationBtn.disabled = true;
-  let seconds = 10;
-  holdProgress = 0;
-  holdTimer = setInterval(() => {
-    holdProgress++;
-    pinStatus.textContent = `Keep holding (${seconds - holdProgress}s)...`;
-    if (holdProgress >= 10) {
-      clearInterval(holdTimer);
-      pinStatus.textContent = "Pinning...";
-      pinLocationBtn.disabled = true;
-      pinLocationBtn.style.opacity = 0.7;
-      doPinLocation();
-      setTimeout(() => {
-        resetPinStatus();
-        pinLocationBtn.style.opacity = 1;
-      }, 1200);
-    }
-  }, 1000);
-}, {passive: false});
-pinLocationBtn.addEventListener('touchend', function() {
-  if (holdTimer) clearInterval(holdTimer);
-  resetPinStatus();
-}, {passive: false});
-pinLocationBtn.addEventListener('touchcancel', function() {
-  if (holdTimer) clearInterval(holdTimer);
-  resetPinStatus();
-}, {passive: false});
-function doPinLocation() {
+// --- Pin Location Button, instant (no hold), always visible ---
+document.getElementById('pin-location').onclick = function() {
   if (!navigator.geolocation) {
     alert('Geolocation is not supported in your browser.');
-    resetPinStatus();
     return;
   }
   navigator.geolocation.getCurrentPosition(
@@ -363,7 +295,7 @@ function doPinLocation() {
     () => alert('Could not get your location.'),
     { enableHighAccuracy: true }
   );
-}
+};
 
 // --- Listen for localStorage changes from other tabs ---
 window.addEventListener('storage', function(e) {
@@ -374,14 +306,6 @@ window.addEventListener('storage', function(e) {
   if (e.key === `room_users_${room}`) {
     afterUserChange();
   }
-});
-
-// --- Big QR code generation (always visible) ---
-const roomUrl = window.location.origin + window.location.pathname + '?room=' + room;
-new QRious({
-  element: document.getElementById('qr-code-big'),
-  value: roomUrl,
-  size: 320
 });
 
 // --- Manual join form for room codes ---
@@ -395,18 +319,12 @@ document.getElementById('join-room-form').addEventListener('submit', function(e)
   }
 });
 
-// --- CODE button flash logic: show big centered room code ---
-const codeBtn = document.getElementById('code-btn');
-const codeBtnSpan = document.getElementById('code-btn-code');
-if (codeBtnSpan) codeBtnSpan.textContent = room;
-
 // --- NEW ROOM Button ---
 document.getElementById('new-room-btn').onclick = function() {
   const newRoom = generateRoomCode();
   window.location.search = '?room=' + newRoom;
 };
 
-// --- LEAVE ROOM Button ---
 const leaveBtn = document.getElementById('leave-room-btn');
 if (leaveBtn) {
   leaveBtn.style.display = "";
@@ -415,7 +333,7 @@ if (leaveBtn) {
       localStorage.removeItem(`anon_user_${room}`);
       let users = getUsersInRoom(room).filter(u => u.color !== userObj.color);
       saveUsersInRoom(room, users);
-      window.location.href = window.location.pathname; // Reload to new room/code
+      window.location.href = window.location.pathname;
     }
   };
-}
+};
