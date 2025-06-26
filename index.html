@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Anonymous Message & Pin App</title>
+  <title>QuePasaAppV3</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 2em; }
     #room-info, #user-info { margin-bottom: 1em; font-weight: bold; }
@@ -12,10 +12,11 @@
     #pin-location { margin-left: 1em; }
     #user-list { margin: 1em 0; }
     .kick-btn { margin-left: 0.5em; color: red; cursor: pointer; background: none; border: none; }
+    #qr-container { margin-left: 2em; display: inline-block; vertical-align: top; }
   </style>
 </head>
 <body>
-  <h1>Anonymous Message & Pin App</h1>
+  <h1>QuePasaAppV3</h1>
   <div id="room-info"></div>
   <div id="user-info"></div>
   <div id="user-list"></div>
@@ -25,6 +26,11 @@
     <button type="submit">Send</button>
     <button type="button" id="pin-location">Pin Location</button>
   </form>
+  <div id="qr-container">
+    <!-- QR code will go here -->
+    <canvas id="qr-code" width="80" height="80" style="cursor:pointer;"></canvas>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
