@@ -3,31 +3,22 @@ const APP_NAME = "QuePasaAppV3";
 
 // --- Room Code Logic ---
 function randomRoomCode() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let code = '';
-  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
-  return code;
+  // 6 digits + 1 uppercase letter
+  const digits = Array.from({length: 6}, () => Math.floor(Math.random() * 10)).join('');
+  const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+  return digits + letter;
 }
 
-// Get or set 6-character room code in URL
+// Get or set 7-character room code in URL
 let params = new URLSearchParams(window.location.search);
 let room = params.get('room');
-if (!room || !/^[A-Z0-9]{6}$/.test(room)) {
+if (!room || !/^\d{6}[A-Z]$/.test(room)) {
   room = randomRoomCode();
   params.set('room', room);
   window.location.search = params.toString();
 }
 
-// --- Sci-fi word lists for optional future use ---
-// (not used here since we use 6-char code)
-const sciFiWords1 = [
-  'nebula', 'quantum', 'android', 'cyber', 'zenith', 'stellar', 'galaxy', 'hyper', 'plasma', 'nova', 'cosmic', 'cypher'
-];
-const sciFiWords2 = [
-  'blaster', 'vortex', 'matrix', 'starlight', 'horizon', 'drone', 'photon', 'core', 'orbit', 'alloy', 'sentinel', 'pulse'
-];
-
-// --- Color pool (primary + gold/silver, exclude white) ---
+// --- Color pool (expanded and vibrant for nice user variety!) ---
 const COLOR_MAP = {
   Red: '#e74c3c',
   Blue: '#3498db',
@@ -36,36 +27,37 @@ const COLOR_MAP = {
   Purple: '#9b59b6',
   Orange: '#e67e22',
   Gold: '#ffd700',
-  Silver: '#bdc3c7'
+  Silver: '#bdc3c7',
+  Pink: '#fd79a8',
+  Teal: '#00b894',
+  Indigo: '#6c5ce7',
+  Brown: '#8d5524',
+  Navy: '#2d3436',
+  Lime: '#b2ff59',
+  Cyan: '#00bcd4',
+  Magenta: '#d500f9'
 };
 const COLORS = Object.keys(COLOR_MAP);
-const TITLES = ['Mr', 'Ms', 'Mx'];
+const TITLES = ['Mr', 'Ms', 'Mx', 'Dr', 'Prof'];
 
-// --- Generate or retrieve username ---
+// --- Generate or retrieve username + random color on each room join ---
 function getUsername() {
-  let user = localStorage.getItem('anon_user');
-  if (!user) {
+  let userObj = localStorage.getItem(`anon_user_${room}`);
+  if (!userObj) {
     const color = COLORS[Math.floor(Math.random() * COLORS.length)];
     const title = TITLES[Math.floor(Math.random() * TITLES.length)];
-    user = `${title} ${color}`;
-    localStorage.setItem('anon_user', user);
+    const randomId = Math.floor(Math.random() * 10000);
+    userObj = JSON.stringify({ username: `${title} ${color}${randomId}`, color });
+    localStorage.setItem(`anon_user_${room}`, userObj);
   }
-  return user;
-}
-
-// Extract color from username
-function getUserColor(username) {
-  for (const color of COLORS) {
-    if (username.includes(color)) return COLOR_MAP[color];
-  }
-  return '#888';
+  return JSON.parse(userObj);
 }
 
 // --- Room Management (local only) ---
 function getRoomOwner(room) {
   let owner = localStorage.getItem(`room_owner_${room}`);
   if (!owner) {
-    owner = username; // First user to create the room is owner
+    owner = username.username; // First user to create the room is owner
     localStorage.setItem(`room_owner_${room}`, owner);
   }
   return owner;
@@ -105,19 +97,20 @@ const owner = getRoomOwner(room);
 
 // --- Room access control ---
 const blocked = getBlockedUsers(room);
-if (blocked.includes(username)) {
+if (blocked.includes(username.username)) {
   alert('You have been removed from this room.');
-  removeUserFromRoom(room, username);
-  document.body.innerHTML = `<h2>You have been removed from this room.</h2>`;
+  removeUserFromRoom(room, username.username);
+  document.body.innerHTML = `<h2 style="text-align:center;">You have been removed from this room.</h2>`;
   throw new Error('Blocked');
 }
 
-addUserToRoom(room, username);
+addUserToRoom(room, username.username);
 
 // --- UI setup ---
 document.title = APP_NAME;
 document.getElementById('room-info').textContent = `Room Code: ${room} (Owner: ${owner})`;
-document.getElementById('user-info').textContent = `You are: ${username}`;
+document.getElementById('user-info').textContent = `You are: ${username.username}`;
+document.getElementById('code-btn-code').textContent = room;
 
 // --- Messages State ---
 let messages = JSON.parse(localStorage.getItem(`room_msgs_${room}`) || '[]');
@@ -126,7 +119,7 @@ let messages = JSON.parse(localStorage.getItem(`room_msgs_${room}`) || '[]');
 function renderUserList() {
   const listDiv = document.getElementById('user-list');
   const users = getUsersInRoom(room);
-  if (username === owner) {
+  if (username.username === owner) {
     let html = '<b>Users:</b> ';
     html += users.map(u => {
       if (u === owner) return `${u} (owner)`;
@@ -155,7 +148,13 @@ function renderMessages(messages) {
   messages.forEach(msg => {
     const div = document.createElement('div');
     div.className = 'message';
-    div.style.background = getUserColor(msg.user);
+    // Find color for user
+    let color = COLOR_MAP[(msg.color && COLORS.includes(msg.color)) ? msg.color : 'Blue'];
+    if (!color && msg.user) {
+      // fallback: try to extract color from username
+      for (const c of COLORS) if (msg.user && msg.user.includes(c)) color = COLOR_MAP[c];
+    }
+    div.style.background = color || '#888';
     if (msg.type === 'text') {
       div.textContent = `${msg.user}: ${msg.text}`;
     } else if (msg.type === 'location') {
@@ -172,7 +171,7 @@ document.getElementById('message-form').addEventListener('submit', function(e) {
   const input = document.getElementById('message-input');
   const text = input.value.trim();
   if (text) {
-    messages.push({ type: 'text', user: username, text });
+    messages.push({ type: 'text', user: username.username, text, color: username.color });
     localStorage.setItem(`room_msgs_${room}`, JSON.stringify(messages));
     renderMessages(messages);
     input.value = '';
@@ -190,7 +189,8 @@ document.getElementById('pin-location').addEventListener('click', function() {
       const { latitude, longitude } = position.coords;
       messages.push({
         type: 'location',
-        user: username,
+        user: username.username,
+        color: username.color,
         lat: latitude.toFixed(6),
         lng: longitude.toFixed(6)
       });
@@ -217,48 +217,75 @@ window.addEventListener('storage', function(e) {
 
 // --- QR code generation ---
 const roomUrl = window.location.origin + window.location.pathname + '?room=' + room;
+// Hidden QR for flash only
+const flashQr = new QRious({
+  element: document.getElementById('flash-qr-code'),
+  value: roomUrl,
+  size: 360
+});
 const qr = new QRious({
   element: document.getElementById('qr-code'),
   value: roomUrl,
-  size: 80
-});
-
-// Click and hold to enlarge QR code
-let qrTimeout;
-const qrContainer = document.getElementById('qr-container');
-qrContainer.addEventListener('mousedown', () => {
-  qrTimeout = setTimeout(() => {
-    qr.set({ size: 320 });
-    qrContainer.style.zIndex = 10;
-    qrContainer.style.position = 'absolute';
-    qrContainer.style.background = '#fff';
-    qrContainer.style.border = '2px solid #333';
-  }, 300); // long-press
-});
-qrContainer.addEventListener('mouseup', () => {
-  clearTimeout(qrTimeout);
-  qr.set({ size: 80 });
-  qrContainer.style.position = 'relative';
-  qrContainer.style.background = 'none';
-  qrContainer.style.border = 'none';
-  qrContainer.style.zIndex = 1;
-});
-qrContainer.addEventListener('mouseleave', () => {
-  clearTimeout(qrTimeout);
-  qr.set({ size: 80 });
-  qrContainer.style.position = 'relative';
-  qrContainer.style.background = 'none';
-  qrContainer.style.border = 'none';
-  qrContainer.style.zIndex = 1;
+  size: 200
 });
 
 // --- Manual join form for room codes ---
 document.getElementById('join-room-form').addEventListener('submit', function(e) {
   e.preventDefault();
   let code = document.getElementById('join-room-input').value.trim().toUpperCase();
-  if (/^[A-Z0-9]{6}$/.test(code)) {
+  if (/^\d{6}[A-Z]$/.test(code)) {
     window.location.search = '?room=' + code;
   } else {
-    alert('Please enter a valid 6-character room code (letters and numbers only).');
+    alert('Please enter a valid room code (6 digits and 1 letter, e.g. 123456A).');
   }
+});
+
+// --- QR button flash logic ---
+const qrBtn = document.getElementById('qr-btn');
+const flashQrDiv = document.getElementById('flash-qr');
+let qrHoldTimeout;
+qrBtn.addEventListener('mousedown', () => {
+  qrBtn.classList.add('hold');
+  qrHoldTimeout = setTimeout(() => {
+    flashQrDiv.classList.add('show');
+  }, 200);
+});
+qrBtn.addEventListener('mouseup', () => {
+  qrBtn.classList.remove('hold');
+  clearTimeout(qrHoldTimeout);
+  flashQrDiv.classList.remove('show');
+});
+qrBtn.addEventListener('mouseleave', () => {
+  qrBtn.classList.remove('hold');
+  clearTimeout(qrHoldTimeout);
+  flashQrDiv.classList.remove('show');
+});
+flashQrDiv.addEventListener('mousedown', () => {
+  flashQrDiv.classList.remove('show');
+});
+
+// --- CODE button flash logic ---
+const codeBtn = document.getElementById('code-btn');
+const flashCodeDiv = document.getElementById('flash-code');
+const flashCodeWhole = document.getElementById('flash-code-whole');
+let codeHoldTimeout;
+codeBtn.addEventListener('mousedown', () => {
+  codeBtn.classList.add('hold');
+  codeHoldTimeout = setTimeout(() => {
+    flashCodeWhole.textContent = room;
+    flashCodeDiv.classList.add('show');
+  }, 200);
+});
+codeBtn.addEventListener('mouseup', () => {
+  codeBtn.classList.remove('hold');
+  clearTimeout(codeHoldTimeout);
+  flashCodeDiv.classList.remove('show');
+});
+codeBtn.addEventListener('mouseleave', () => {
+  codeBtn.classList.remove('hold');
+  clearTimeout(codeHoldTimeout);
+  flashCodeDiv.classList.remove('show');
+});
+flashCodeDiv.addEventListener('mousedown', () => {
+  flashCodeDiv.classList.remove('show');
 });
