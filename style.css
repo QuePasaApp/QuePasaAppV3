@@ -1,154 +1,169 @@
 html, body {
-  height: 100%;
   margin: 0;
   padding: 0;
-}
-body {
-  min-height: 100vh;
   width: 100vw;
+  min-height: 100vh;
   box-sizing: border-box;
-  font-family: 'Segoe UI', Arial, sans-serif;
   background: linear-gradient(145deg, #145214 0%, #1e772a 100%);
   color: #fff;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0;
+  min-height: 100vh;
 }
+
+.header-bar {
+  width: 100vw;
+  max-width: 100vw;
+  background: #145214ee;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1em 2vw 0.7em 2vw;
+}
+
 h1 {
-  margin-top: 0.5em;
-  margin-bottom: 0.7em;
-  font-size: 2.3rem;
-  letter-spacing: 2.5px;
+  margin: 0;
+  font-size: 2.2em;
+  letter-spacing: 1px;
   font-weight: bold;
-  color: #fff;
-  text-shadow: 0 2px 8px #0006;
+  text-shadow: 0 2px 8px #0005;
+  flex: 1 1 auto;
+  text-align: center;
 }
+
 #new-room-btn, #leave-room-btn {
-  display: inline-block;
-  margin: 1em 0 0.5em 0;
-  padding: 0.55em 1.8em;
-  font-size: 1.1em;
+  font-size: 1.08em;
   font-weight: bold;
   border-radius: 2em;
   border: none;
-  box-shadow: 0 2px 10px #0002;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s, box-shadow 0.18s;
-}
-#new-room-btn {
   background: #fff;
   color: #145214;
-  border: 2px solid #145214;
+  padding: 0.55em 1.5em;
+  margin: 0 0.5em;
+  cursor: pointer;
+  box-shadow: 0 1px 8px #0002;
+  transition: background 0.15s, color 0.15s;
 }
-#new-room-btn:active {
+#new-room-btn:active, #leave-room-btn:active {
   background: #145214;
   color: #fff;
 }
-#leave-room-btn {
-  background: #fff;
-  color: #145214;
-  border: 2px solid #145214;
-  display: none;
-}
-#leave-room-btn.show {
-  display: inline-block;
-}
-#top-actions {
+
+#room-section {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 1.2em;
-  margin-bottom: 1.7em;
+  margin: 2em 0 0.5em 0;
 }
-#code-btn {
-  background: #fff;
-  border: none;
-  border-radius: 1em;
-  box-shadow: 0 2px 8px #2225;
-  cursor: pointer;
+
+.room-code-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#room-info {
+  font-size: 1.19em;
   font-weight: bold;
-  font-size: 1.13em;
-  color: #145214;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 1.2em;
-  height: 48px;
-  letter-spacing: 0.2em;
-  transition: box-shadow 0.2s, color 0.2s;
+  letter-spacing: 0.15em;
+  margin-bottom: 0.5em;
 }
-#code-btn:active, #code-btn.hold {
-  box-shadow: 0 0 0 8px #fff8;
-  background: #145214;
-  color: #fff;
-}
-#code-btn span {
-  margin-left: 0.5em;
+#room-code-display {
   font-family: "Consolas", "Courier New", monospace;
-  font-size: 1.4em;
-  background: #145214;
-  color: #fff;
-  border-radius: 0.3em;
-  padding: 0.13em 0.36em;
-  font-weight: bold;
-  transition: font-size 0.18s, font-weight 0.18s, background 0.18s, color 0.18s;
-}
-#code-btn:hover span,
-#code-btn:focus span {
-  font-size: 2.4em;
-  font-weight: 900;
   background: #fff;
   color: #145214;
-  border: 2px solid #fff;
-  box-shadow: 0 0 12px #fff;
+  border-radius: 0.3em;
+  padding: 0.07em 0.46em;
+  margin-left: 0.5em;
+  font-size: 1.5em;
+  font-weight: bold;
+  letter-spacing: 0.2em;
 }
-#qr-big-container {
-  margin: 1.5em 0 1.5em 0;
-  text-align: center;
-}
+
 #qr-code-big {
-  width: 320px;
-  height: 320px;
   border-radius: 1.2em;
   border: 8px solid #fff;
   background: #fff;
   box-shadow: 0 2px 32px #222c;
+  margin-top: 0.4em;
+  width: 240px;
+  height: 240px;
   max-width: 90vw;
   max-height: 90vw;
+  display: block;
 }
-#room-info, #user-info {
+.qr-label {
+  color: #fff;
   text-align: center;
-  margin-bottom: 0.7em;
-  font-size: 1.13em;
+  margin-top: 0.6em;
+  margin-bottom: 1em;
+  font-size: 1.09em;
   font-weight: 500;
-  letter-spacing: 0.1em;
 }
+
+#join-room-form {
+  margin-top: 1.1em;
+  margin-bottom: 0.7em;
+  display: flex;
+  gap: 0.6em;
+  align-items: center;
+}
+#join-room-input {
+  font-size: 1.09em;
+  border-radius: 0.5em;
+  border: 1px solid #ccc;
+  text-align: center;
+  padding: 0.4em 1.1em;
+}
+#join-room-form button {
+  background: #fff;
+  color: #145214;
+  border-radius: 0.5em;
+  padding: 0.4em 1.1em;
+  border: none;
+  font-size: 1.08em;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#user-info {
+  margin-top: 0.7em;
+  margin-bottom: 0.3em;
+  font-size: 1.09em;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
 #user-list {
   margin-bottom: 1em;
   font-weight: bold;
   text-align: center;
   width: 100%;
+  min-height: 2.2em;
 }
+
 .user-roster {
   display: flex;
-  gap: 1.2em;
+  gap: 1em;
   justify-content: center;
   flex-wrap: wrap;
-  margin-top: 0.5em;
+  margin-top: 0.4em;
 }
 .user-roster-item {
   display: flex;
   align-items: center;
-  gap: 0.4em;
+  gap: 0.3em;
   font-size: 1em;
-  min-width: 80px;
+  min-width: 70px;
 }
 .color-dot {
   display: inline-block;
-  width: 1.5em;
-  height: 1.5em;
+  width: 1.1em;
+  height: 1.1em;
   border-radius: 50%;
   border: 2px solid #fff;
   vertical-align: middle;
@@ -160,11 +175,11 @@ h1 {
   color: #b71c1c;
   border: 1.5px solid #b71c1c;
   border-radius: 50%;
-  font-size: 1.1em;
-  width: 1.7em;
-  height: 1.7em;
+  font-size: 1.09em;
+  width: 1.5em;
+  height: 1.5em;
   cursor: pointer;
-  transition: background 0.18s;
+  transition: background 0.14s;
   padding: 0;
   box-shadow: 0 1px 4px #b71c1c22;
 }
@@ -172,8 +187,9 @@ h1 {
   background: #b71c1c;
   color: #fff;
 }
-#poll-area {
-  margin: 1em 0 1em 0;
+
+#poll-section {
+  margin: 1em 0 1.5em 0;
   text-align: center;
 }
 #start-poll-btn {
@@ -181,21 +197,21 @@ h1 {
   color: #145214;
   font-weight: bold;
   border-radius: 0.7em;
-  font-size: 1.09em;
+  font-size: 1.08em;
   border: none;
-  padding: 0.5em 1.8em;
+  padding: 0.45em 1.5em;
   margin-bottom: 0.7em;
   cursor: pointer;
   box-shadow: 0 1px 8px #0002;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
 }
 #start-poll-btn:active {
   background: #ffe066;
 }
 #poll-question {
-  margin-top: 0.7em;
-  margin-bottom: 0.7em;
-  font-size: 1.2em;
+  margin-top: 0.6em;
+  margin-bottom: 0.6em;
+  font-size: 1.18em;
 }
 .vote-btn {
   font-size: 1.08em;
@@ -203,12 +219,12 @@ h1 {
   color: #145214;
   border: none;
   border-radius: 0.5em;
-  padding: 0.38em 1.25em;
-  margin: 0.2em 0.5em;
+  padding: 0.38em 1.1em;
+  margin: 0.2em 0.4em;
   cursor: pointer;
   font-weight: bold;
   box-shadow: 0 1px 8px #0001;
-  transition: background 0.18s, color 0.18s;
+  transition: background 0.13s, color 0.13s;
 }
 .vote-btn:active {
   background: #b9f6ca;
@@ -219,16 +235,24 @@ h1 {
   background: #145214;
   color: #fff;
   border-radius: 0.5em;
-  padding: 0.8em 1.5em;
-  font-size: 1.09em;
+  padding: 0.7em 1.4em;
+  font-size: 1.08em;
   box-shadow: 0 2px 12px #0003;
+}
+
+#chat-section {
+  width: 100vw;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 #messages {
   border: 1px solid #ccc;
   padding: 1em;
-  min-height: 200px;
+  min-height: 140px;
   margin-bottom: 1em;
-  width: 93%;
+  width: 95%;
   max-width: 600px;
   background: #fff;
   text-align: center;
@@ -239,7 +263,7 @@ h1 {
   overflow-x: auto;
 }
 .message {
-  margin-bottom: 0.5em;
+  margin-bottom: 0.4em;
   padding: 0.5em 1em;
   border-radius: 1em;
   display: inline-block;
@@ -251,8 +275,8 @@ h1 {
 .location {
   color: #2d7;
 }
-#message-form, #join-room-form {
-  width: 93%;
+#message-form {
+  width: 95%;
   max-width: 600px;
   display: flex;
   justify-content: center;
@@ -260,7 +284,7 @@ h1 {
   gap: 0.5em;
   margin-bottom: 1em;
 }
-#message-input, #join-room-input {
+#message-input {
   flex: 1;
   padding: 0.5em;
   font-size: 1em;
@@ -270,35 +294,30 @@ h1 {
   text-align: center;
 }
 #pin-location {
-  margin-left: 0.5em;
-  background: #e0f7fa;
+  background: #ffd600;
   color: #145214;
   border: none;
-  border-radius: 0.5em;
-  padding: 0.5em 1.3em;
+  border-radius: 0.7em;
+  padding: 0.48em 1.2em;
   font-weight: bold;
   cursor: pointer;
-  transition: background 0.18s, color 0.18s;
-  position: relative;
-  outline: none;
+  font-size: 1.18em;
+  margin-left: 0.2em;
+  transition: background 0.13s, color 0.13s;
 }
 #pin-location:active {
-  background: #b2ebf2;
+  background: #ffe066;
   color: #004d40;
 }
-#pin-location-status {
-  font-style: italic;
-  color: #ffd600;
-}
 @media (max-width: 700px) {
-  #messages, #message-form, #join-room-form {
-    width: 100%;
-    max-width: none;
-  }
   #qr-code-big {
-    width: 90vw !important;
-    height: 90vw !important;
+    width: 80vw !important;
+    height: 80vw !important;
     max-width: 98vw;
     max-height: 98vw;
+  }
+  #messages, #message-form, #join-room-form {
+    width: 99vw;
+    max-width: none;
   }
 }
