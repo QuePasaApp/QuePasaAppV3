@@ -1,7 +1,25 @@
 // --- App constants ---
 const APP_NAME = "QuePasaAppV3";
 
-// Sci-fi word lists for room names
+// --- Room Code Logic ---
+function randomRoomCode() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+// Get or set 6-character room code in URL
+let params = new URLSearchParams(window.location.search);
+let room = params.get('room');
+if (!room || !/^[A-Z0-9]{6}$/.test(room)) {
+  room = randomRoomCode();
+  params.set('room', room);
+  window.location.search = params.toString();
+}
+
+// --- Sci-fi word lists for optional future use ---
+// (not used here since we use 6-char code)
 const sciFiWords1 = [
   'nebula', 'quantum', 'android', 'cyber', 'zenith', 'stellar', 'galaxy', 'hyper', 'plasma', 'nova', 'cosmic', 'cypher'
 ];
@@ -9,22 +27,7 @@ const sciFiWords2 = [
   'blaster', 'vortex', 'matrix', 'starlight', 'horizon', 'drone', 'photon', 'core', 'orbit', 'alloy', 'sentinel', 'pulse'
 ];
 
-// Generates a random sci-fi room name: word-number-word
-function generateSciFiRoomName() {
-  const word1 = sciFiWords1[Math.floor(Math.random() * sciFiWords1.length)];
-  const number = Math.floor(Math.random() * 900) + 100; // 3-digit number
-  const word2 = sciFiWords2[Math.floor(Math.random() * sciFiWords2.length)];
-  return `${word1}-${number}-${word2}`;
-}
-
-// Room name from URL or generate new
-let room = new URLSearchParams(window.location.search).get('room');
-if (!room) {
-  room = generateSciFiRoomName();
-  window.location.search = '?room=' + room;
-}
-
-// Color pool (primary + gold/silver, exclude white)
+// --- Color pool (primary + gold/silver, exclude white) ---
 const COLOR_MAP = {
   Red: '#e74c3c',
   Blue: '#3498db',
@@ -38,7 +41,7 @@ const COLOR_MAP = {
 const COLORS = Object.keys(COLOR_MAP);
 const TITLES = ['Mr', 'Ms', 'Mx'];
 
-// Generate or retrieve username
+// --- Generate or retrieve username ---
 function getUsername() {
   let user = localStorage.getItem('anon_user');
   if (!user) {
@@ -58,7 +61,7 @@ function getUserColor(username) {
   return '#888';
 }
 
-// Room Management (demo: local only)
+// --- Room Management (local only) ---
 function getRoomOwner(room) {
   let owner = localStorage.getItem(`room_owner_${room}`);
   if (!owner) {
@@ -96,11 +99,11 @@ function blockUser(room, username) {
   removeUserFromRoom(room, username);
 }
 
-// App state
+// --- App state ---
 const username = getUsername();
 const owner = getRoomOwner(room);
 
-// Room access control
+// --- Room access control ---
 const blocked = getBlockedUsers(room);
 if (blocked.includes(username)) {
   alert('You have been removed from this room.');
@@ -111,15 +114,15 @@ if (blocked.includes(username)) {
 
 addUserToRoom(room, username);
 
-// UI setup
+// --- UI setup ---
 document.title = APP_NAME;
-document.getElementById('room-info').textContent = `Room: ${room} (Owner: ${owner})`;
+document.getElementById('room-info').textContent = `Room Code: ${room} (Owner: ${owner})`;
 document.getElementById('user-info').textContent = `You are: ${username}`;
 
-// State
+// --- Messages State ---
 let messages = JSON.parse(localStorage.getItem(`room_msgs_${room}`) || '[]');
 
-// Render user list for owner
+// --- Render user list for owner ---
 function renderUserList() {
   const listDiv = document.getElementById('user-list');
   const users = getUsersInRoom(room);
@@ -145,7 +148,7 @@ function renderUserList() {
 }
 renderUserList();
 
-// Render messages
+// --- Render messages ---
 function renderMessages(messages) {
   const messagesDiv = document.getElementById('messages');
   messagesDiv.innerHTML = '';
@@ -161,10 +164,9 @@ function renderMessages(messages) {
     messagesDiv.appendChild(div);
   });
 }
-
 renderMessages(messages);
 
-// Send text message
+// --- Send text message ---
 document.getElementById('message-form').addEventListener('submit', function(e) {
   e.preventDefault();
   const input = document.getElementById('message-input');
@@ -177,7 +179,7 @@ document.getElementById('message-form').addEventListener('submit', function(e) {
   }
 });
 
-// Pin location
+// --- Pin location ---
 document.getElementById('pin-location').addEventListener('click', function() {
   if (!navigator.geolocation) {
     alert('Geolocation is not supported in your browser.');
@@ -202,7 +204,7 @@ document.getElementById('pin-location').addEventListener('click', function() {
   );
 });
 
-// Listen for localStorage changes from other tabs
+// --- Listen for localStorage changes from other tabs ---
 window.addEventListener('storage', function(e) {
   if (e.key === `room_msgs_${room}`) {
     messages = JSON.parse(e.newValue || '[]');
@@ -233,7 +235,6 @@ qrContainer.addEventListener('mousedown', () => {
     qrContainer.style.border = '2px solid #333';
   }, 300); // long-press
 });
-
 qrContainer.addEventListener('mouseup', () => {
   clearTimeout(qrTimeout);
   qr.set({ size: 80 });
@@ -242,7 +243,6 @@ qrContainer.addEventListener('mouseup', () => {
   qrContainer.style.border = 'none';
   qrContainer.style.zIndex = 1;
 });
-
 qrContainer.addEventListener('mouseleave', () => {
   clearTimeout(qrTimeout);
   qr.set({ size: 80 });
@@ -250,4 +250,15 @@ qrContainer.addEventListener('mouseleave', () => {
   qrContainer.style.background = 'none';
   qrContainer.style.border = 'none';
   qrContainer.style.zIndex = 1;
+});
+
+// --- Manual join form for room codes ---
+document.getElementById('join-room-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  let code = document.getElementById('join-room-input').value.trim().toUpperCase();
+  if (/^[A-Z0-9]{6}$/.test(code)) {
+    window.location.search = '?room=' + code;
+  } else {
+    alert('Please enter a valid 6-character room code (letters and numbers only).');
+  }
 });
