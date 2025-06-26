@@ -6,49 +6,48 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <button id="new-room-btn" style="margin-bottom:1em;">New Room</button>
-  <button id="leave-room-btn" style="margin-bottom:1em;display:none;">Leave Room</button>
-  <h1>QuePasaAppV3</h1>
-  <div id="top-actions">
-    <button class="icon-btn" id="qr-btn" title="Show QR" style="display:none;">
-      <!-- This button is hidden, QR is always visible now -->
-    </button>
-    <button id="code-btn" title="Show Code">
-      CODE <span id="code-btn-code">123456A</span>
-    </button>
+  <div class="header-bar">
+    <button id="new-room-btn">+ New Room</button>
+    <h1>QuePasaAppV3</h1>
+    <button id="leave-room-btn" style="display:none;">Leave Room</button>
   </div>
-  <div id="qr-big-container">
-    <canvas id="qr-code-big" width="320" height="320"></canvas>
-    <div style="color:#fff;margin-top:1em;">Scan to join this room</div>
-  </div>
-  <form id="join-room-form">
-    <input type="text" id="join-room-input" maxlength="7" placeholder="Enter Room Code" style="text-transform:uppercase;" required>
-    <button type="submit">Join Room</button>
-  </form>
-  <div id="room-info"></div>
-  <div id="user-info"></div>
-  <div id="user-list"></div>
-  <div id="poll-area">
-    <button id="start-poll-btn" style="display:none;">Start Poll</button>
+
+  <section id="room-section">
+    <div class="room-code-block">
+      <div id="room-info">Room Code: <span id="room-code-display"></span></div>
+      <canvas id="qr-code-big" width="240" height="240"></canvas>
+      <div class="qr-label">Scan or enter the code to join!</div>
+    </div>
+    <form id="join-room-form">
+      <input type="text" id="join-room-input" maxlength="7" placeholder="Enter Room Code" autocomplete="off" required>
+      <button type="submit">Join Room</button>
+    </form>
+    <div id="user-info"></div>
+    <div id="user-list"></div>
+  </section>
+
+  <section id="poll-section">
+    <button id="start-poll-btn" style="display:none;">Start Vote</button>
     <div id="poll-question" style="display:none;">
-      <span>Quick Poll: </span>
-      <button id="vote-yes" class="vote-btn">👍 Yep</button>
-      <button id="vote-no" class="vote-btn">👎 Nope</button>
+      <span>Quick Vote:</span>
+      <button id="vote-yes" class="vote-btn">👍 Yes</button>
+      <button id="vote-no" class="vote-btn">👎 No</button>
     </div>
     <div id="poll-results" style="display:none;"></div>
-  </div>
-  <div id="messages"></div>
-  <form id="message-form">
-    <input type="text" id="message-input" placeholder="Type your message..." required />
-    <button type="submit">Send</button>
-    <button type="button" id="pin-location">Pin Location</button>
-    <span id="pin-location-status" style="margin-left:1em;font-size:0.95em;color:#ffd600;display:none;">Hold to pin...</span>
-  </form>
-  <!-- Button click sound (short click) -->
+  </section>
+
+  <section id="chat-section">
+    <div id="messages"></div>
+    <form id="message-form">
+      <input type="text" id="message-input" placeholder="Type your message..." autocomplete="off" required />
+      <button type="submit">Send</button>
+      <button type="button" id="pin-location" title="Pin your current location">📍 Pin Location</button>
+    </form>
+  </section>
+
+  <!-- Sounds -->
   <audio id="btn-click-sound" src="https://cdn.jsdelivr.net/gh/QuePasaApp/static/click.wav"></audio>
-  <!-- Whip sound for kick (replace with your own if you want) -->
   <audio id="btn-whip-sound" src="https://cdn.jsdelivr.net/gh/QuePasaApp/static/whip.mp3"></audio>
-  <!-- Soft whisper sound for user join (replace with your own if you want) -->
   <audio id="whisper-sound" src="https://cdn.jsdelivr.net/gh/QuePasaApp/static/whisper.mp3"></audio>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
   <script src="app.js"></script>
