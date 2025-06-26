@@ -4,23 +4,227 @@
   <meta charset="UTF-8">
   <title>QuePasaAppV3</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 2em; }
-    #room-info, #user-info { margin-bottom: 1em; font-weight: bold; }
-    #messages { border: 1px solid #ccc; padding: 1em; min-height: 200px; margin-bottom: 1em; }
-    .message { margin-bottom: 0.5em; padding: 0.5em 1em; border-radius: 1em; display: inline-block; max-width: 70%; color: #fff; }
-    .location { color: #2d7; }
-    #pin-location { margin-left: 1em; }
-    #user-list { margin: 1em 0; }
-    .kick-btn { margin-left: 0.5em; color: red; cursor: pointer; background: none; border: none; }
-    #qr-container { margin-left: 2em; display: inline-block; vertical-align: top; }
-    #qr-code { transition: width 0.2s, height 0.2s; }
-    #join-room-form { margin-bottom: 1em; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2em;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #228B22; /* Forest green */
+    }
+    h1 {
+      text-align: center;
+      color: #fff;
+      letter-spacing: 2px;
+      margin-bottom: 0.5em;
+    }
+    #top-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1em;
+      margin-bottom: 1.5em;
+    }
+    .icon-btn {
+      background: #fff;
+      border: none;
+      border-radius: 1em;
+      box-shadow: 0 2px 8px #2225;
+      padding: 0.2em 0.5em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 40px;
+      width: 40px;
+      transition: box-shadow 0.2s;
+      position: relative;
+    }
+    .icon-btn:active,
+    .icon-btn.hold {
+      box-shadow: 0 0 0 8px #fff8;
+    }
+    .icon-btn svg {
+      width: 24px;
+      height: 24px;
+      display: block;
+    }
+    #flash-qr, #flash-code {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #228B22;
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      animation: popIn 0.2s;
+    }
+    #flash-qr.show, #flash-code.show {
+      display: flex;
+    }
+    #flash-qr canvas {
+      border-radius: 1em;
+      border: 4px solid #fff;
+      background: #fff;
+      box-shadow: 0 2px 32px #222c;
+      width: 360px;
+      height: 360px;
+    }
+    #flash-code-whole {
+      font-size: 8em;
+      color: #fff;
+      font-family: "Consolas", "Courier New", monospace;
+      text-shadow: 0 2px 8px #000c, 0 0 32px #fff8;
+      animation: popChar 0.15s;
+      padding: 0.2em 0.6em;
+      border-radius: 0.25em;
+      background: #228B22;
+      border: 4px solid #fff;
+      letter-spacing: 0.15em;
+      text-align: center;
+      margin-bottom: 0.5em;
+    }
+    @keyframes popIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes popChar {
+      from { transform: scale(0.7); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    #code-btn {
+      background: #fff;
+      border: none;
+      border-radius: 1em;
+      box-shadow: 0 2px 8px #2225;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 1.1em;
+      color: #228B22;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 1.2em;
+      height: 40px;
+      position: relative;
+      letter-spacing: 0.2em;
+      transition: box-shadow 0.2s;
+    }
+    #code-btn:active, #code-btn.hold {
+      box-shadow: 0 0 0 8px #fff8;
+      background: #228B22;
+      color: #fff;
+    }
+    #code-btn span {
+      margin-left: 0.5em;
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 1.2em;
+      background: #228B22;
+      color: #fff;
+      border-radius: 0.3em;
+      padding: 0.1em 0.3em;
+      font-weight: bold;
+    }
+    #room-info, #user-info, #user-list {
+      margin-bottom: 1em;
+      font-weight: bold;
+      text-align: center;
+      width: 100%;
+      color: #fff;
+    }
+    #messages {
+      border: 1px solid #ccc;
+      padding: 1em;
+      min-height: 200px;
+      margin-bottom: 1em;
+      width: 90%;
+      max-width: 600px;
+      background: #fff;
+      text-align: center;
+      box-sizing: border-box;
+      border-radius: 1em;
+    }
+    .message {
+      margin-bottom: 0.5em;
+      padding: 0.5em 1em;
+      border-radius: 1em;
+      display: inline-block;
+      max-width: 70%;
+      color: #fff;
+      text-align: left;
+    }
+    .location {
+      color: #2d7;
+    }
+    #message-form, #join-room-form {
+      width: 90%;
+      max-width: 600px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5em;
+      margin-bottom: 1em;
+    }
+    #message-input, #join-room-input {
+      flex: 1;
+      padding: 0.5em;
+      font-size: 1em;
+      border-radius: 0.5em;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      text-align: center;
+    }
+    #pin-location {
+      margin-left: 0.5em;
+    }
+    .kick-btn {
+      margin-left: 0.5em;
+      color: red;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+    #qr-container {
+      display: none;
+    }
+    @media (max-width: 600px) {
+      #messages, #message-form, #join-room-form {
+        width: 100%;
+        max-width: none;
+      }
+      #flash-qr canvas {
+        width: 90vw; height: 90vw; max-width: 98vw; max-height: 98vw;
+      }
+      #flash-code-whole {
+        font-size: 3.2em;
+      }
+    }
   </style>
 </head>
 <body>
   <h1>QuePasaAppV3</h1>
+  <div id="top-actions">
+    <button class="icon-btn" id="qr-btn" title="Show QR">
+      <!-- qr code icon SVG -->
+      <svg viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="7" height="7" rx="2" stroke="#228B22" stroke-width="2"/><rect x="2" y="15" width="7" height="7" rx="2" stroke="#228B22" stroke-width="2"/><rect x="15" y="2" width="7" height="7" rx="2" stroke="#228B22" stroke-width="2"/><path d="M15 17h2m2 0h2M17 15v2m0 2v2" stroke="#228B22" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <button id="code-btn" title="Show Code">
+      CODE <span id="code-btn-code">123456A</span>
+    </button>
+  </div>
+  <div id="flash-qr">
+    <canvas id="flash-qr-code" width="360" height="360"></canvas>
+    <div style="color:#fff;margin-top:1em;">Scan to join this room</div>
+  </div>
+  <div id="flash-code">
+    <div id="flash-code-whole">123456A</div>
+    <div style="color:#fff;margin-top:1em;letter-spacing:0.4em;font-size:1.4em;">Enter this code to join</div>
+  </div>
   <form id="join-room-form">
-    <input type="text" id="join-room-input" maxlength="6" placeholder="Enter Room Code" style="text-transform:uppercase;" required>
+    <input type="text" id="join-room-input" maxlength="7" placeholder="Enter Room Code" style="text-transform:uppercase;" required>
     <button type="submit">Join Room</button>
   </form>
   <div id="room-info"></div>
@@ -33,7 +237,7 @@
     <button type="button" id="pin-location">Pin Location</button>
   </form>
   <div id="qr-container">
-    <canvas id="qr-code" width="80" height="80" style="cursor:pointer;"></canvas>
+    <canvas id="qr-code" width="200" height="200"></canvas>
     <div><small>Scan to join this room</small></div>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
