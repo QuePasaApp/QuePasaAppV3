@@ -2,14 +2,11 @@
 const APP_NAME = "QuePasaAppV3";
 
 // --- Room Code Logic ---
-// Generate 6 random digits and 1 random uppercase letter
 function generateRoomCode() {
   const digits = Array.from({length: 6}, () => Math.floor(Math.random() * 10)).join('');
   const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
   return digits + letter;
 }
-
-// Get or set the room code in the URL, using history.replaceState (no reload)
 function getRoomCodeFromURL() {
   let params = new URLSearchParams(window.location.search);
   let room = params.get('room');
@@ -20,32 +17,18 @@ function getRoomCodeFromURL() {
   }
   return room;
 }
-
 const room = getRoomCodeFromURL();
 
-// --- Color pool (expanded and vibrant for nice user variety) ---
+// --- Color pool (vibrant for user variety) ---
 const COLOR_MAP = {
-  Red: '#e74c3c',
-  Blue: '#3498db',
-  Yellow: '#f1c40f',
-  Green: '#27ae60',
-  Purple: '#9b59b6',
-  Orange: '#e67e22',
-  Gold: '#ffd700',
-  Silver: '#bdc3c7',
-  Pink: '#fd79a8',
-  Teal: '#00b894',
-  Indigo: '#6c5ce7',
-  Brown: '#8d5524',
-  Navy: '#2d3436',
-  Lime: '#b2ff59',
-  Cyan: '#00bcd4',
-  Magenta: '#d500f9'
+  Red: '#e74c3c', Blue: '#3498db', Yellow: '#f1c40f', Green: '#27ae60', Purple: '#9b59b6',
+  Orange: '#e67e22', Gold: '#ffd700', Silver: '#bdc3c7', Pink: '#fd79a8', Teal: '#00b894',
+  Indigo: '#6c5ce7', Brown: '#8d5524', Navy: '#2d3436', Lime: '#b2ff59', Cyan: '#00bcd4', Magenta: '#d500f9'
 };
 const COLORS = Object.keys(COLOR_MAP);
 const TITLES = ['Mr', 'Ms', 'Mx', 'Dr', 'Prof'];
 
-// --- Generate or retrieve username + random color on each room join ---
+// --- Generate or retrieve username + random color per room join ---
 function getUsernameObj() {
   let userObj = localStorage.getItem(`anon_user_${room}`);
   if (!userObj) {
@@ -57,12 +40,15 @@ function getUsernameObj() {
   }
   return JSON.parse(userObj);
 }
+const usernameObj = getUsernameObj();
+const username = usernameObj.username;
+const userColor = COLOR_MAP[usernameObj.color] || '#888';
 
 // --- Room Management (local only) ---
 function getRoomOwner(room) {
   let owner = localStorage.getItem(`room_owner_${room}`);
   if (!owner) {
-    owner = usernameObj.username;
+    owner = username;
     localStorage.setItem(`room_owner_${room}`, owner);
   }
   return owner;
@@ -97,12 +83,7 @@ function blockUser(room, username) {
 }
 
 // --- App state ---
-const usernameObj = getUsernameObj();
-const username = usernameObj.username;
-const userColor = COLOR_MAP[usernameObj.color] || '#888';
 const owner = getRoomOwner(room);
-
-// --- Room access control ---
 const blocked = getBlockedUsers(room);
 if (blocked.includes(username)) {
   alert('You have been removed from this room.');
@@ -110,7 +91,6 @@ if (blocked.includes(username)) {
   document.body.innerHTML = `<h2 style="text-align:center;">You have been removed from this room.</h2>`;
   throw new Error('Blocked');
 }
-
 addUserToRoom(room, username);
 
 // --- UI setup ---
@@ -118,6 +98,26 @@ document.title = APP_NAME;
 document.getElementById('room-info').textContent = `Room Code: ${room} (Owner: ${owner})`;
 document.getElementById('user-info').textContent = `You are: ${username}`;
 document.getElementById('code-btn-code').textContent = room;
+
+// --- Button sound setup ---
+const clickSound = document.getElementById('btn-click-sound');
+const whipSound = document.getElementById('btn-whip-sound');
+function playBtnClick() {
+  if (clickSound) {
+    clickSound.currentTime = 0;
+    clickSound.play();
+  }
+}
+function playWhip() {
+  if (whipSound) {
+    whipSound.currentTime = 0;
+    whipSound.play();
+  }
+}
+// Play click sound for all button clicks
+document.addEventListener('click', function(e) {
+  if (e.target.closest('button')) playBtnClick();
+});
 
 // --- Messages State ---
 let messages = JSON.parse(localStorage.getItem(`room_msgs_${room}`) || '[]');
@@ -134,9 +134,11 @@ function renderUserList() {
     }).join(', ');
     listDiv.innerHTML = html;
     document.querySelectorAll('.kick-btn').forEach(btn => {
-      btn.onclick = function() {
+      btn.onclick = function(e) {
+        e.stopPropagation();
         const userToKick = this.getAttribute('data-user');
         if (confirm(`Kick ${userToKick}?`)) {
+          playWhip();
           blockUser(room, userToKick);
           renderUserList();
         }
@@ -244,52 +246,84 @@ document.getElementById('join-room-form').addEventListener('submit', function(e)
   }
 });
 
-// --- QR button flash logic ---
+// --- QR button flash logic (HOLD or HOVER) ---
 const qrBtn = document.getElementById('qr-btn');
 const flashQrDiv = document.getElementById('flash-qr');
-let qrHoldTimeout;
-qrBtn.addEventListener('mousedown', () => {
-  qrBtn.classList.add('hold');
-  qrHoldTimeout = setTimeout(() => {
+let qrFlashActive = false;
+function showQRFlash() {
+  if (!qrFlashActive) {
+    qrFlashActive = true;
     flashQrDiv.classList.add('show');
-  }, 200);
-});
-qrBtn.addEventListener('mouseup', () => {
-  qrBtn.classList.remove('hold');
-  clearTimeout(qrHoldTimeout);
+  }
+}
+function hideQRFlash() {
+  qrFlashActive = false;
   flashQrDiv.classList.remove('show');
-});
-qrBtn.addEventListener('mouseleave', () => {
-  qrBtn.classList.remove('hold');
-  clearTimeout(qrHoldTimeout);
-  flashQrDiv.classList.remove('show');
-});
-flashQrDiv.addEventListener('mousedown', () => {
-  flashQrDiv.classList.remove('show');
-});
+}
+qrBtn.addEventListener('mouseenter', showQRFlash);
+qrBtn.addEventListener('mouseleave', hideQRFlash);
+qrBtn.addEventListener('mousedown', showQRFlash);
+qrBtn.addEventListener('mouseup', hideQRFlash);
+qrBtn.addEventListener('touchstart', (e) => { e.preventDefault(); showQRFlash(); });
+qrBtn.addEventListener('touchend', hideQRFlash);
+flashQrDiv.addEventListener('mousedown', hideQRFlash);
+flashQrDiv.addEventListener('touchstart', (e) => { e.preventDefault(); hideQRFlash(); });
 
-// --- CODE button flash logic ---
+// --- CODE button flash logic with stoplight and stop sign ---
 const codeBtn = document.getElementById('code-btn');
 const flashCodeDiv = document.getElementById('flash-code');
-const flashCodeWhole = document.getElementById('flash-code-whole');
-let codeHoldTimeout;
+const flashCodeChar = document.getElementById('flash-code-char');
+const stopSignSVG = `
+  <svg width="120" height="120" viewBox="0 0 120 120">
+    <polygon points="20,10 100,10 110,20 110,100 100,110 20,110 10,100 10,20" fill="#c0392b" stroke="#fff" stroke-width="7"/>
+    <text x="60" y="78" font-size="54" font-family="Arial, Helvetica, sans-serif" fill="#fff" text-anchor="middle" font-weight="bold">STOP</text>
+  </svg>
+`;
+let codeFlashInterval, codeFlashIndex, isFlashing = false;
+const stoplightColors = ['stoplight-red', 'stoplight-yellow', 'stoplight-green', 'stoplight-green'];
+function flashCodeSequence(code) {
+  isFlashing = true;
+  flashCodeDiv.classList.add('show');
+  codeFlashIndex = 0;
+  function showChar() {
+    flashCodeChar.className = "";
+    if (codeFlashIndex < code.length) {
+      const colorClass = stoplightColors[codeFlashIndex % stoplightColors.length];
+      flashCodeChar.classList.add(colorClass);
+      flashCodeChar.innerHTML = code[codeFlashIndex];
+    } else {
+      flashCodeChar.classList.add('stoplight-stop');
+      flashCodeChar.innerHTML = stopSignSVG;
+    }
+    codeFlashIndex++;
+    if (codeFlashIndex <= code.length) {
+      codeFlashInterval = setTimeout(showChar, 3000);
+    } else {
+      codeFlashIndex = 0;
+      codeFlashInterval = setTimeout(showChar, 3000);
+    }
+  }
+  showChar();
+}
+function stopFlashingCode() {
+  isFlashing = false;
+  clearTimeout(codeFlashInterval);
+  flashCodeDiv.classList.remove('show');
+  flashCodeChar.innerHTML = '';
+  flashCodeChar.className = '';
+}
+codeBtn.addEventListener('mouseenter', () => {
+  if (!isFlashing) flashCodeSequence(room);
+});
+codeBtn.addEventListener('mouseleave', stopFlashingCode);
 codeBtn.addEventListener('mousedown', () => {
-  codeBtn.classList.add('hold');
-  codeHoldTimeout = setTimeout(() => {
-    flashCodeWhole.textContent = room;
-    flashCodeDiv.classList.add('show');
-  }, 200);
+  if (!isFlashing) flashCodeSequence(room);
 });
-codeBtn.addEventListener('mouseup', () => {
-  codeBtn.classList.remove('hold');
-  clearTimeout(codeHoldTimeout);
-  flashCodeDiv.classList.remove('show');
+codeBtn.addEventListener('mouseup', stopFlashingCode);
+codeBtn.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  if (!isFlashing) flashCodeSequence(room);
 });
-codeBtn.addEventListener('mouseleave', () => {
-  codeBtn.classList.remove('hold');
-  clearTimeout(codeHoldTimeout);
-  flashCodeDiv.classList.remove('show');
-});
-flashCodeDiv.addEventListener('mousedown', () => {
-  flashCodeDiv.classList.remove('show');
-});
+codeBtn.addEventListener('touchend', stopFlashingCode);
+flashCodeDiv.addEventListener('mousedown', stopFlashingCode);
+flashCodeDiv.addEventListener('touchstart', (e) => { e.preventDefault(); stopFlashingCode(); });
