@@ -12,7 +12,7 @@
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      background: #228B22; /* Forest green */
+      background: #145214;
     }
     h1 {
       text-align: center;
@@ -55,11 +55,13 @@
       display: none;
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: #228B22;
       z-index: 1000;
       align-items: center;
       justify-content: center;
       flex-direction: column;
+    }
+    #flash-qr {
+      background: #145214;
       animation: popIn 0.2s;
     }
     #flash-qr.show, #flash-code.show {
@@ -73,20 +75,41 @@
       width: 360px;
       height: 360px;
     }
-    #flash-code-whole {
-      font-size: 8em;
+    #flash-code {
+      animation: popIn 0.2s;
+      width: 100vw;
+      height: 100vh;
+    }
+    #flash-code-char {
+      font-size: 8vw;
+      min-height: 1em;
       color: #fff;
       font-family: "Consolas", "Courier New", monospace;
       text-shadow: 0 2px 8px #000c, 0 0 32px #fff8;
       animation: popChar 0.15s;
       padding: 0.2em 0.6em;
       border-radius: 0.25em;
-      background: #228B22;
       border: 4px solid #fff;
       letter-spacing: 0.15em;
       text-align: center;
       margin-bottom: 0.5em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 50vw;
+      height: 50vh;
+      min-width: 120px;
+      min-height: 120px;
+      max-width: 90vw;
+      max-height: 90vh;
+      font-weight: bold;
+      background: #145214;
+      transition: background 0.3s;
     }
+    .stoplight-red    { background: #c0392b !important; }
+    .stoplight-yellow { background: #f1c40f !important; color: #222 !important; }
+    .stoplight-green  { background: #16a085 !important; }
+    .stoplight-stop   { background: #c0392b !important; }
     @keyframes popIn {
       from { opacity: 0; }
       to   { opacity: 1; }
@@ -103,7 +126,7 @@
       cursor: pointer;
       font-weight: bold;
       font-size: 1.1em;
-      color: #228B22;
+      color: #145214;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -115,18 +138,29 @@
     }
     #code-btn:active, #code-btn.hold {
       box-shadow: 0 0 0 8px #fff8;
-      background: #228B22;
+      background: #145214;
       color: #fff;
     }
     #code-btn span {
       margin-left: 0.5em;
       font-family: "Consolas", "Courier New", monospace;
       font-size: 1.2em;
-      background: #228B22;
+      background: #145214;
       color: #fff;
       border-radius: 0.3em;
       padding: 0.1em 0.3em;
       font-weight: bold;
+      transition: font-size 0.18s, font-weight 0.18s;
+    }
+    #code-btn:hover span,
+    #code-btn:focus span {
+      font-size: 2.2em;
+      font-weight: 900;
+      background: #fff;
+      color: #145214;
+      border: 2px solid #fff;
+      box-shadow: 0 0 12px #fff;
+      transition: font-size 0.18s, font-weight 0.18s;
     }
     #room-info, #user-info, #user-list {
       margin-bottom: 1em;
@@ -198,8 +232,10 @@
       #flash-qr canvas {
         width: 90vw; height: 90vw; max-width: 98vw; max-height: 98vw;
       }
-      #flash-code-whole {
+      #flash-code-char {
         font-size: 3.2em;
+        width: 90vw;
+        height: 40vh;
       }
     }
   </style>
@@ -208,8 +244,7 @@
   <h1>QuePasaAppV3</h1>
   <div id="top-actions">
     <button class="icon-btn" id="qr-btn" title="Show QR">
-      <!-- qr code icon SVG -->
-      <svg viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="7" height="7" rx="2" stroke="#228B22" stroke-width="2"/><rect x="2" y="15" width="7" height="7" rx="2" stroke="#228B22" stroke-width="2"/><rect x="15" y="2" width="7" height="7" rx="2" stroke="#228B22" stroke-width="2"/><path d="M15 17h2m2 0h2M17 15v2m0 2v2" stroke="#228B22" stroke-width="2" stroke-linecap="round"/></svg>
+      <svg viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="7" height="7" rx="2" stroke="#145214" stroke-width="2"/><rect x="2" y="15" width="7" height="7" rx="2" stroke="#145214" stroke-width="2"/><rect x="15" y="2" width="7" height="7" rx="2" stroke="#145214" stroke-width="2"/><path d="M15 17h2m2 0h2M17 15v2m0 2v2" stroke="#145214" stroke-width="2" stroke-linecap="round"/></svg>
     </button>
     <button id="code-btn" title="Show Code">
       CODE <span id="code-btn-code">123456A</span>
@@ -220,7 +255,7 @@
     <div style="color:#fff;margin-top:1em;">Scan to join this room</div>
   </div>
   <div id="flash-code">
-    <div id="flash-code-whole">123456A</div>
+    <div id="flash-code-char"></div>
     <div style="color:#fff;margin-top:1em;letter-spacing:0.4em;font-size:1.4em;">Enter this code to join</div>
   </div>
   <form id="join-room-form">
@@ -240,6 +275,10 @@
     <canvas id="qr-code" width="200" height="200"></canvas>
     <div><small>Scan to join this room</small></div>
   </div>
+  <!-- Button click sound (short click) -->
+  <audio id="btn-click-sound" src="https://cdn.jsdelivr.net/gh/QuePasaApp/static/click.wav"></audio>
+  <!-- Whip sound for kick (replace with your own if you want) -->
+  <audio id="btn-whip-sound" src="https://cdn.jsdelivr.net/gh/QuePasaApp/static/whip.mp3"></audio>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
   <script src="app.js"></script>
 </body>
