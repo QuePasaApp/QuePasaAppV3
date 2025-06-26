@@ -1,11 +1,8 @@
-/* QuePasaAppV3 - Full CSS Reset and Redesign */
-
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
 }
-
 body {
   min-height: 100vh;
   width: 100vw;
@@ -18,7 +15,6 @@ body {
   align-items: center;
   padding: 0;
 }
-
 h1 {
   margin-top: 0.5em;
   margin-bottom: 0.7em;
@@ -28,8 +24,7 @@ h1 {
   color: #fff;
   text-shadow: 0 2px 8px #0006;
 }
-
-#test-mode-btn, #leave-room-btn {
+#new-room-btn, #leave-room-btn {
   display: inline-block;
   margin: 1em 0 0.5em 0;
   padding: 0.55em 1.8em;
@@ -42,13 +37,13 @@ h1 {
   cursor: pointer;
   transition: background 0.2s, color 0.2s, box-shadow 0.18s;
 }
-#test-mode-btn {
+#new-room-btn {
   background: #fff;
-  color: #b71c1c;
-  border: 2px solid #b71c1c;
+  color: #145214;
+  border: 2px solid #145214;
 }
-#test-mode-btn:active {
-  background: #b71c1c;
+#new-room-btn:active {
+  background: #145214;
   color: #fff;
 }
 #leave-room-btn {
@@ -67,32 +62,6 @@ h1 {
   gap: 1.2em;
   margin-bottom: 1.7em;
 }
-
-.icon-btn {
-  background: #fff;
-  border: none;
-  border-radius: 1em;
-  box-shadow: 0 2px 8px #2225;
-  padding: 0.2em 0.5em;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 48px;
-  width: 48px;
-  transition: box-shadow 0.2s;
-  position: relative;
-}
-.icon-btn:active,
-.icon-btn.hold {
-  box-shadow: 0 0 0 8px #fff8;
-}
-.icon-btn svg {
-  width: 28px;
-  height: 28px;
-  display: block;
-}
-
 #code-btn {
   background: #fff;
   border: none;
@@ -135,7 +104,20 @@ h1 {
   border: 2px solid #fff;
   box-shadow: 0 0 12px #fff;
 }
-
+#qr-big-container {
+  margin: 1.5em 0 1.5em 0;
+  text-align: center;
+}
+#qr-code-big {
+  width: 320px;
+  height: 320px;
+  border-radius: 1.2em;
+  border: 8px solid #fff;
+  background: #fff;
+  box-shadow: 0 2px 32px #222c;
+  max-width: 90vw;
+  max-height: 90vw;
+}
 #room-info, #user-info {
   text-align: center;
   margin-bottom: 0.7em;
@@ -143,14 +125,12 @@ h1 {
   font-weight: 500;
   letter-spacing: 0.1em;
 }
-
 #user-list {
   margin-bottom: 1em;
   font-weight: bold;
   text-align: center;
   width: 100%;
 }
-
 .user-roster {
   display: flex;
   gap: 1.2em;
@@ -192,12 +172,10 @@ h1 {
   background: #b71c1c;
   color: #fff;
 }
-
 #poll-area {
   margin: 1em 0 1em 0;
   text-align: center;
 }
-
 #start-poll-btn {
   background: #ffd600;
   color: #145214;
@@ -214,13 +192,11 @@ h1 {
 #start-poll-btn:active {
   background: #ffe066;
 }
-
 #poll-question {
   margin-top: 0.7em;
   margin-bottom: 0.7em;
   font-size: 1.2em;
 }
-
 .vote-btn {
   font-size: 1.08em;
   background: #fff;
@@ -238,7 +214,6 @@ h1 {
   background: #b9f6ca;
   color: #1b5e20;
 }
-
 #poll-results {
   margin-top: 1em;
   background: #145214;
@@ -248,61 +223,6 @@ h1 {
   font-size: 1.09em;
   box-shadow: 0 2px 12px #0003;
 }
-
-#flash-qr, #flash-code {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  z-index: 1000;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  background: rgba(20,82,20,0.97);
-  animation: popIn 0.2s;
-}
-#flash-qr.show, #flash-code.show {
-  display: flex;
-}
-#flash-qr canvas {
-  border-radius: 1em;
-  border: 6px solid #fff;
-  background: #fff;
-  box-shadow: 0 2px 32px #222c;
-  width: 320px !important;
-  height: 320px !important;
-  max-width: 90vw;
-  max-height: 90vw;
-}
-#flash-code-char {
-  font-size: 6vw;
-  min-height: 1em;
-  color: #fff;
-  font-family: "Consolas", "Courier New", monospace;
-  text-shadow: 0 2px 8px #000c, 0 0 32px #fff8;
-  padding: 0.6em 1.6em;
-  border-radius: 0.3em;
-  border: 4px solid #fff;
-  letter-spacing: 0.25em;
-  text-align: center;
-  margin-bottom: 0.7em;
-  background: #145214;
-  font-weight: bold;
-  width: 70vw;
-  max-width: 380px;
-  transition: background 0.3s;
-  box-shadow: 0 2px 32px #222c;
-  animation: popChar 0.15s;
-  user-select: all;
-}
-@keyframes popIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-@keyframes popChar {
-  from { transform: scale(0.7); opacity: 0; }
-  to   { transform: scale(1); opacity: 1; }
-}
-
 #messages {
   border: 1px solid #ccc;
   padding: 1em;
@@ -318,7 +238,6 @@ h1 {
   box-shadow: 0 2px 16px #0002;
   overflow-x: auto;
 }
-
 .message {
   margin-bottom: 0.5em;
   padding: 0.5em 1em;
@@ -332,7 +251,6 @@ h1 {
 .location {
   color: #2d7;
 }
-
 #message-form, #join-room-form {
   width: 93%;
   max-width: 600px;
@@ -361,29 +279,26 @@ h1 {
   font-weight: bold;
   cursor: pointer;
   transition: background 0.18s, color 0.18s;
+  position: relative;
+  outline: none;
 }
 #pin-location:active {
   background: #b2ebf2;
   color: #004d40;
 }
-#qr-container {
-  display: none;
+#pin-location-status {
+  font-style: italic;
+  color: #ffd600;
 }
-
 @media (max-width: 700px) {
   #messages, #message-form, #join-room-form {
     width: 100%;
     max-width: none;
   }
-  #flash-qr canvas {
+  #qr-code-big {
     width: 90vw !important;
     height: 90vw !important;
     max-width: 98vw;
     max-height: 98vw;
-  }
-  #flash-code-char {
-    font-size: 8vw;
-    width: 95vw;
-    max-width: 98vw;
   }
 }
