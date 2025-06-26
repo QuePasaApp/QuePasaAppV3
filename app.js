@@ -1,3 +1,29 @@
+// --- App constants ---
+const APP_NAME = "QuePasaAppV3";
+
+// Sci-fi word lists for room names
+const sciFiWords1 = [
+  'nebula', 'quantum', 'android', 'cyber', 'zenith', 'stellar', 'galaxy', 'hyper', 'plasma', 'nova', 'cosmic', 'cypher'
+];
+const sciFiWords2 = [
+  'blaster', 'vortex', 'matrix', 'starlight', 'horizon', 'drone', 'photon', 'core', 'orbit', 'alloy', 'sentinel', 'pulse'
+];
+
+// Generates a random sci-fi room name: word-number-word
+function generateSciFiRoomName() {
+  const word1 = sciFiWords1[Math.floor(Math.random() * sciFiWords1.length)];
+  const number = Math.floor(Math.random() * 900) + 100; // 3-digit number
+  const word2 = sciFiWords2[Math.floor(Math.random() * sciFiWords2.length)];
+  return `${word1}-${number}-${word2}`;
+}
+
+// Room name from URL or generate new
+let room = new URLSearchParams(window.location.search).get('room');
+if (!room) {
+  room = generateSciFiRoomName();
+  window.location.search = '?room=' + room;
+}
+
 // Color pool (primary + gold/silver, exclude white)
 const COLOR_MAP = {
   Red: '#e74c3c',
@@ -33,14 +59,6 @@ function getUserColor(username) {
 }
 
 // Room Management (demo: local only)
-function getRoom() {
-  let room = localStorage.getItem('room_name');
-  if (!room) {
-    room = prompt('Enter a room name:') || 'default-room';
-    localStorage.setItem('room_name', room);
-  }
-  return room;
-}
 function getRoomOwner(room) {
   let owner = localStorage.getItem(`room_owner_${room}`);
   if (!owner) {
@@ -49,8 +67,6 @@ function getRoomOwner(room) {
   }
   return owner;
 }
-
-// Track users in room (local demo)
 function getUsersInRoom(room) {
   const data = localStorage.getItem(`room_users_${room}`);
   return data ? JSON.parse(data) : [];
@@ -67,8 +83,6 @@ function removeUserFromRoom(room, username) {
   users = users.filter(u => u !== username);
   localStorage.setItem(`room_users_${room}`, JSON.stringify(users));
 }
-
-// BLOCKED USERS (demo)
 function getBlockedUsers(room) {
   const data = localStorage.getItem(`room_blocked_${room}`);
   return data ? JSON.parse(data) : [];
@@ -84,22 +98,21 @@ function blockUser(room, username) {
 
 // App state
 const username = getUsername();
-const room = getRoom();
 const owner = getRoomOwner(room);
 
 // Room access control
 const blocked = getBlockedUsers(room);
 if (blocked.includes(username)) {
   alert('You have been removed from this room.');
-  // Remove from users list and redirect or freeze UI
   removeUserFromRoom(room, username);
-  document.body.innerHTML = '<h2>You have been removed from this room.</h2>';
+  document.body.innerHTML = `<h2>You have been removed from this room.</h2>`;
   throw new Error('Blocked');
 }
 
 addUserToRoom(room, username);
 
 // UI setup
+document.title = APP_NAME;
 document.getElementById('room-info').textContent = `Room: ${room} (Owner: ${owner})`;
 document.getElementById('user-info').textContent = `You are: ${username}`;
 
@@ -184,7 +197,8 @@ document.getElementById('pin-location').addEventListener('click', function() {
     },
     (err) => {
       alert('Could not get your location.');
-    }
+    },
+    { enableHighAccuracy: true }
   );
 });
 
@@ -197,4 +211,43 @@ window.addEventListener('storage', function(e) {
   if (e.key === `room_users_${room}` || e.key === `room_blocked_${room}`) {
     renderUserList();
   }
+});
+
+// --- QR code generation ---
+const roomUrl = window.location.origin + window.location.pathname + '?room=' + room;
+const qr = new QRious({
+  element: document.getElementById('qr-code'),
+  value: roomUrl,
+  size: 80
+});
+
+// Click and hold to enlarge QR code
+let qrTimeout;
+const qrContainer = document.getElementById('qr-container');
+qrContainer.addEventListener('mousedown', () => {
+  qrTimeout = setTimeout(() => {
+    qr.set({ size: 320 });
+    qrContainer.style.zIndex = 10;
+    qrContainer.style.position = 'absolute';
+    qrContainer.style.background = '#fff';
+    qrContainer.style.border = '2px solid #333';
+  }, 300); // long-press
+});
+
+qrContainer.addEventListener('mouseup', () => {
+  clearTimeout(qrTimeout);
+  qr.set({ size: 80 });
+  qrContainer.style.position = 'relative';
+  qrContainer.style.background = 'none';
+  qrContainer.style.border = 'none';
+  qrContainer.style.zIndex = 1;
+});
+
+qrContainer.addEventListener('mouseleave', () => {
+  clearTimeout(qrTimeout);
+  qr.set({ size: 80 });
+  qrContainer.style.position = 'relative';
+  qrContainer.style.background = 'none';
+  qrContainer.style.border = 'none';
+  qrContainer.style.zIndex = 1;
 });
