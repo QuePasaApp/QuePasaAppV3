@@ -6,24 +6,20 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <button id="test-mode-btn" style="margin-bottom:1em;">AT TEST MODE</button>
+  <button id="new-room-btn" style="margin-bottom:1em;">New Room</button>
   <button id="leave-room-btn" style="margin-bottom:1em;display:none;">Leave Room</button>
   <h1>QuePasaAppV3</h1>
   <div id="top-actions">
-    <button class="icon-btn" id="qr-btn" title="Show QR">
-      <svg viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="7" height="7" rx="2" stroke="#145214" stroke-width="2"/><rect x="2" y="15" width="7" height="7" rx="2" stroke="#145214" stroke-width="2"/><rect x="15" y="2" width="7" height="7" rx="2" stroke="#145214" stroke-width="2"/><path d="M15 17h2m2 0h2M17 15v2m0 2v2" stroke="#145214" stroke-width="2" stroke-linecap="round"/></svg>
+    <button class="icon-btn" id="qr-btn" title="Show QR" style="display:none;">
+      <!-- This button is hidden, QR is always visible now -->
     </button>
     <button id="code-btn" title="Show Code">
       CODE <span id="code-btn-code">123456A</span>
     </button>
   </div>
-  <div id="flash-qr">
-    <canvas id="flash-qr-code" width="640" height="640" style="width:320px;height:320px"></canvas>
+  <div id="qr-big-container">
+    <canvas id="qr-code-big" width="320" height="320"></canvas>
     <div style="color:#fff;margin-top:1em;">Scan to join this room</div>
-  </div>
-  <div id="flash-code">
-    <div id="flash-code-char"></div>
-    <div style="color:#fff;margin-top:1em;letter-spacing:0.4em;font-size:1.4em;">Enter this code to join</div>
   </div>
   <form id="join-room-form">
     <input type="text" id="join-room-input" maxlength="7" placeholder="Enter Room Code" style="text-transform:uppercase;" required>
@@ -33,7 +29,6 @@
   <div id="user-info"></div>
   <div id="user-list"></div>
   <div id="poll-area">
-    <!-- Host sees "Start poll" button here. Others see poll/vote UI here. -->
     <button id="start-poll-btn" style="display:none;">Start Poll</button>
     <div id="poll-question" style="display:none;">
       <span>Quick Poll: </span>
@@ -47,11 +42,8 @@
     <input type="text" id="message-input" placeholder="Type your message..." required />
     <button type="submit">Send</button>
     <button type="button" id="pin-location">Pin Location</button>
+    <span id="pin-location-status" style="margin-left:1em;font-size:0.95em;color:#ffd600;display:none;">Hold to pin...</span>
   </form>
-  <div id="qr-container">
-    <canvas id="qr-code" width="200" height="200"></canvas>
-    <div><small>Scan to join this room</small></div>
-  </div>
   <!-- Button click sound (short click) -->
   <audio id="btn-click-sound" src="https://cdn.jsdelivr.net/gh/QuePasaApp/static/click.wav"></audio>
   <!-- Whip sound for kick (replace with your own if you want) -->
@@ -60,6 +52,5 @@
   <audio id="whisper-sound" src="https://cdn.jsdelivr.net/gh/QuePasaApp/static/whisper.mp3"></audio>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
   <script src="app.js"></script>
-  <!-- <script src="firebase-impl.js"></script> -->
 </body>
 </html>
